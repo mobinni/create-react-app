@@ -10,30 +10,32 @@
  */
 
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//   /!\ DO NOT MODIFY THIS FILE /!\
+// /!\ DO NOT MODIFY THIS FILE /!\
+//
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 //
-// create-react-app is installed globally on people's computers. This means
-// that it is extremely difficult to have them upgrade the version and
-// because there's only one global version installed, it is very prone to
-// breaking changes.
+// create-react-app is installed globally on people's computers. This means that
+// it is extremely difficult to have them upgrade the version and because
+// there's only one global version installed, it is very prone to breaking
+// changes.
 //
-// The only job of create-react-app is to init the repository and then
-// forward all the commands to the local version of create-react-app.
+// The only job of create-react-app is to init the repository and then forward
+// all the commands to the local version of create-react-app.
 //
 // If you need to add a new command, please add it to the scripts/ folder.
 //
 // The only reason to modify this file is to add more warnings and
 // troubleshooting information for the `create-react-app` command.
 //
-// Do not make breaking changes! We absolutely don't want to have to
-// tell people to update their global version of create-react-app.
+// Do not make breaking changes! We absolutely don't want to have to tell people
+// to update their global version of create-react-app.
 //
-// Also be careful with new language features.
-// This file must work on Node 0.10+.
+// Also be careful with new language features. This file must work on Node
+// 0.10+.
 //
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//   /!\ DO NOT MODIFY THIS FILE /!\
+// /!\ DO NOT MODIFY THIS FILE /!\
+//
 // ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 'use strict';
@@ -62,9 +64,7 @@ if (commands.length === 0) {
     console.log('create-react-app version: ' + require('./package.json').version);
     process.exit();
   }
-  console.error(
-    'Usage: create-react-app <project-directory> [--verbose]'
-  );
+  console.error('Usage: create-react-app <project-directory> [--verbose]');
   process.exit(1);
 }
 
@@ -83,20 +83,26 @@ function createApp(name, verbose, version) {
     process.exit(1);
   }
 
-  console.log(
-    'Creating a new React app in ' + root + '.'
-  );
+  console.log('Creating a new React app in ' + root + '.');
   console.log();
+
+  // Check npm version
+  var versionProc = spawn('npm', ['--version']);
+  versionProc
+    .stdout
+    .on('data', function (data) {
+      var recommendVersion = semver.lt(data.toString(), '3.0.0');
+      if (recommendVersion) {
+        console.log('Tip: It looks like you are using npm 2. We suggest using npm 3 or Yarn for faster install times and less disk space usage.')
+      }
+    });
 
   var packageJson = {
     name: appName,
     version: '0.1.0',
-    private: true,
+    private: true
   };
-  fs.writeFileSync(
-    path.join(root, 'package.json'),
-    JSON.stringify(packageJson, null, 2)
-  );
+  fs.writeFileSync(path.join(root, 'package.json'), JSON.stringify(packageJson, null, 2));
   var originalDirectory = process.cwd();
   process.chdir(root);
 
@@ -108,12 +114,7 @@ function createApp(name, verbose, version) {
 }
 
 function install(packageToInstall, verbose, callback) {
-  var args = [
-    'add',
-    '--dev',
-    '--exact',
-    packageToInstall,
-  ];
+  var args = ['add', '--dev', '--exact', packageToInstall];
   var proc = spawn('yarn', args, {stdio: 'inherit'});
 
   var yarnExists = true;
@@ -129,12 +130,13 @@ function install(packageToInstall, verbose, callback) {
     }
     // No Yarn installed, continuing with npm.
     args = [
-      'install',
-      verbose && '--verbose',
-      '--save-dev',
-      '--save-exact',
-      packageToInstall,
-    ].filter(function(e) { return e; });
+      'install', verbose && '--verbose',
+        '--save-dev',
+        '--save-exact',
+        packageToInstall
+      ].filter(function (e) {
+      return e;
+    });
     var npmProc = spawn('npm', args, {stdio: 'inherit'});
     npmProc.on('close', function (code) {
       callback(code, 'npm', args);
@@ -154,13 +156,7 @@ function run(root, appName, version, verbose, originalDirectory) {
 
     checkNodeVersion(packageName);
 
-    var scriptsPath = path.resolve(
-      process.cwd(),
-      'node_modules',
-      packageName,
-      'scripts',
-      'init.js'
-    );
+    var scriptsPath = path.resolve(process.cwd(), 'node_modules', packageName, 'scripts', 'init.js');
     var init = require(scriptsPath);
     init(root, appName, verbose, originalDirectory);
   });
@@ -181,37 +177,29 @@ function getInstallPackage(version) {
 // Extract package name from tarball url or path.
 function getPackageName(installPackage) {
   if (installPackage.indexOf('.tgz') > -1) {
-    // The package name could be with or without semver version, e.g. react-scripts-0.2.0-alpha.1.tgz
-    // However, this function returns package name only wihout semver version.
+    // The package name could be with or without semver version, e.g.
+    // react-scripts-0.2.0-alpha.1.tgz However, this function returns package name
+    // only wihout semver version.
     return installPackage.match(/^.+\/(.+?)(?:-\d+.+)?\.tgz$/)[1];
   } else if (installPackage.indexOf('@') > 0) {
     // Do not match @scope/ when stripping off @version or @tag
-    return installPackage.charAt(0) + installPackage.substr(1).split('@')[0];
+    return installPackage.charAt(0) + installPackage
+      .substr(1)
+      .split('@')[0];
   }
   return installPackage;
 }
 
 function checkNodeVersion(packageName) {
-  var packageJsonPath = path.resolve(
-    process.cwd(),
-    'node_modules',
-    packageName,
-    'package.json'
-  );
+  var packageJsonPath = path.resolve(process.cwd(), 'node_modules', packageName, 'package.json');
   var packageJson = require(packageJsonPath);
   if (!packageJson.engines || !packageJson.engines.node) {
     return;
   }
 
   if (!semver.satisfies(process.version, packageJson.engines.node)) {
-    console.error(
-      chalk.red(
-        'You are currently running Node %s but create-react-app requires %s.' +
-        ' Please use a supported version of Node.\n'
-      ),
-      process.version,
-      packageJson.engines.node
-    );
+    console.error(chalk.red('You are currently running Node %s but create-react-app requires %s. Please use a' +
+        ' supported version of Node.\n'), process.version, packageJson.engines.node);
     process.exit(1);
   }
 }
@@ -220,34 +208,36 @@ function checkAppName(appName) {
   // TODO: there should be a single place that holds the dependencies
   var dependencies = ['react', 'react-dom'];
   var devDependencies = ['react-scripts'];
-  var allDependencies = dependencies.concat(devDependencies).sort();
+  var allDependencies = dependencies
+    .concat(devDependencies)
+    .sort();
 
   if (allDependencies.indexOf(appName) >= 0) {
-    console.error(
-      chalk.red(
-        'We cannot create a project called `' + appName + '` because a dependency with the same name exists.\n' +
-        'Due to the way npm works, the following names are not allowed:\n\n'
-      ) +
-      chalk.cyan(
-        allDependencies.map(function(depName) {
-          return '  ' + depName;
-        }).join('\n')
-      ) +
-      chalk.red('\n\nPlease choose a different project name.')
-    );
+    console.error(chalk.red('We cannot create a project called `' + appName + '` because a dependency with the same name exists.\nDue to the way npm works, the' +
+        ' following names are not allowed:\n\n') + chalk.cyan(allDependencies.map(function (depName) {
+      return '  ' + depName;
+    }).join('\n')) + chalk.red('\n\nPlease choose a different project name.'));
     process.exit(1);
   }
 }
 
-// If project only contains files generated by GH, it’s safe.
-// We also special case IJ-based products .idea because it integrates with CRA:
-// https://github.com/facebookincubator/create-react-app/pull/368#issuecomment-243446094
+// If project only contains files generated by GH, it’s safe. We also special
+// case IJ-based products .idea because it integrates with CRA:
+// https://github.com/facebookincubator/create-react-app/pull/368#issuecomment-2
+// 4 3446094
 function isSafeToCreateProjectIn(root) {
   var validFiles = [
-    '.DS_Store', 'Thumbs.db', '.git', '.gitignore', '.idea', 'README.md', 'LICENSE'
+    '.DS_Store',
+    'Thumbs.db',
+    '.git',
+    '.gitignore',
+    '.idea',
+    'README.md',
+    'LICENSE'
   ];
-  return fs.readdirSync(root)
-    .every(function(file) {
+  return fs
+    .readdirSync(root)
+    .every(function (file) {
       return validFiles.indexOf(file) >= 0;
     });
 }
